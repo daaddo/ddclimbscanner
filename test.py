@@ -43,6 +43,8 @@ results = processor.post_process_instance_segmentation(
 
 print(f"Trovati {len(results['masks'])} oggetti per il prompt: '{text_prompt}'")
 
+print(f"results sono: {results}")
+
 # --- 4. Visualizzazione ---
 plt.figure(figsize=(10, 10))
 plt.imshow(image) # Mostra l'immagine base
