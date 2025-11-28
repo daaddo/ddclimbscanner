@@ -2,51 +2,82 @@ import torch
 import numpy as np
 import matplotlib.pyplot as plt
 from PIL import Image
-from transformers import Sam3TrackerProcessor, Sam3TrackerModel
+from transformers import Sam3TrackerProcessor, Sam3TrackerModel,Sam3Processor, Sam3Model
 
 # --- 1. SETUP ---
 device = "cuda" if torch.cuda.is_available() else "cpu"
+print(f" using cuda? :{torch.cuda.is_available()}")
 processor = Sam3TrackerProcessor.from_pretrained("facebook/sam3")
 model = Sam3TrackerModel.from_pretrained("facebook/sam3").to(device)
 
+
+standard_processor = Sam3Processor.from_pretrained("facebook/sam3")
+standard_model = Sam3Model.from_pretrained("facebook/sam3").to(device)
 image_path = "img.jpg"
 image = Image.open(image_path).convert("RGB")
 
 # --- STATO GLOBALE DELL'OGGETTO (ID 0) ---
+# punti correnti è una lista di lista, ciascuna inner list è costituita da due elementi
+#  x,y che corrispondono ai punti, ogni elemento della lista esterna è un punto
+#etichette correnti è una lista di dimensioni UGUALE a punti correnti, che riferisce se un punto è di addizione o sottrazione 
+#ad esempio 1,0 -> aggiungi l oggetto sul punto primo punti_correnti , sottrai l oggetto dal secondo elemento in punti_correnti
 punti_correnti = [[1200, 97]]  
-etichette_correnti = [1]       # 1 = punto positivo
+etichette_correnti = [1]      
+
+
 
 # Buffer per contare i click temporanei
 nuovi_click_buffer = [] 
 
 # --- FUNZIONE HELPER: ESEGUE SAM ---
-def esegui_sam(punti, etichette):
-    print(f"--> Esecuzione SAM su {len(punti)} punti totali...")
+def esegui_sam_standard():    
     
-    # Preparazione input
-    # FIX 2: input_points vuole [[punti]] (2 livelli extra), non [[[punti]]] (3 livelli extra)
-    # Perché la variabile 'punti' contiene già il livello delle coordinate.
-    # Struttura finale desiderata: [Batch, Object, Point, Coord]
-    inputs = processor(
-        images=image,
-        input_points=[[ punti ]],    # <--- CORRETTO: Solo 2 parentesi esterne qui
-        input_labels=[[ etichette ]], # <--- CORRETTO: Batch -> Object -> LabelList
-        return_tensors="pt"
+    inputs = standard_processor(
+    images=image,
+    text="climbing holds",
+    return_tensors="pt"
     ).to(device)
 
     with torch.no_grad():
         outputs = model(**inputs)
 
     # Post-processing
-    nuova_maschera_batch = processor.post_process_masks(
+    nuova_maschera_batch = standard_processor.post_process_instance_segmentation(
         outputs.pred_masks.cpu(), 
         inputs["original_sizes"], 
+        gino="tocrash",
         mask_threshold=0.0,
         binarize=True
     )[0]
     
     # Restituisce la maschera migliore (indice 0 delle 3 proposte)
     return nuova_maschera_batch[0]
+
+def esegui_sam(punti, etichette):
+    print(f"--> Esecuzione SAM su {len(punti)} punti totali...")
+
+    inputs = standard_processor(
+    images=image,
+    
+    return_tensors="pt"
+    ).to(device)
+
+    with torch.no_grad():
+        outputs = model(**inputs)
+
+    # Post-processing
+    nuova_maschera_batch = processor.p(
+        outputs.pred_masks.cpu(), 
+        inputs["original_sizes"], 
+        gino="tocrash",
+        mask_threshold=0.0,
+        binarize=True
+    )[0]
+    
+    # Restituisce la maschera migliore (indice 0 delle 3 proposte)
+    return nuova_maschera_batch[0]
+
+
 
 # --- FUNZIONI DI VISUALIZZAZIONE ---
 def show_mask(mask, ax):
@@ -65,7 +96,7 @@ def show_points(coords, labels, ax):
 
 # --- 2. GENERAZIONE INIZIALE ---
 print("Generazione maschera iniziale...")
-maschera_attuale = esegui_sam(punti_correnti, etichette_correnti)
+maschera_attuale = esegui_sam_standard()
 
 
 # --- 3. INTERFACCIA GRAFICA ---

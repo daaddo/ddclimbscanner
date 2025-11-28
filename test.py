@@ -29,7 +29,11 @@ image = Image.open(image_path).convert("RGB")
 # --- 3. Inferenza ---
 # Modifica qui il testo per cercare oggetti diversi (es. "cat", "remote", "blanket")
 text_prompt = "climbing holds" 
-inputs = processor(images=image, text=text_prompt, return_tensors="pt").to(device)
+inputs = processor(
+    images=image,
+    text=text_prompt,
+    return_tensors="pt"
+    ).to(device)
 
 with torch.no_grad():
     outputs = model(**inputs)
