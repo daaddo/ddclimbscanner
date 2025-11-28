@@ -150,6 +150,8 @@ def ridisegna():
         titolo += "\nClicca su una maschera per selezionarla!"
     elif stato_interfaccia['modalita'] == "MIGLIORA":
         titolo += f"\nModifica oggetto ID {stato_interfaccia['id_selezionato']} (Sx: +, Dx: -)"
+    elif stato_interfaccia['modalita'] == "ELIMINA":
+        titolo += "\nClicca su una maschera per eliminarla definitivamente"
     else:
         titolo += "\nClicca nel vuoto per aggiungere nuovi oggetti"
 
@@ -162,6 +164,25 @@ def on_map_click(event):
     if event.inaxes != ax: return
     x, y = int(event.xdata), int(event.ydata)
     
+    # 0. LOGICA ELIMINA
+    if stato_interfaccia['modalita'] == "ELIMINA":
+        found_idx = None
+        # Iteriamo al contrario per prendere quello più in alto
+        for i in range(len(oggetti_scena)-1, -1, -1):
+            mask = oggetti_scena[i]['mask']
+            if mask is not None and 0 <= y < H and 0 <= x < W and mask[y, x]:
+                found_idx = i
+                break
+        
+        if found_idx is not None:
+            print(f"Eliminato oggetto indice {found_idx}")
+            oggetti_scena.pop(found_idx)
+            # Dobbiamo correggere gli ID degli oggetti rimasti (opzionale ma pulito)
+            for j, obj in enumerate(oggetti_scena):
+                obj['id'] = j
+            ridisegna()
+        return
+
     # 1. LOGICA MIGLIORA
     if stato_interfaccia['modalita'] == "MIGLIORA":
         # A. Se nessun oggetto è selezionato, cerchiamo chi abbiamo cliccato
@@ -178,7 +199,7 @@ def on_map_click(event):
                     break
             if not found:
                 print("Nessuna maschera qui.")
-            ridisegna()
+            # ridisegna() RIMOSSO PER PRESTAZIONI
             return
 
         # B. Oggetto selezionato -> Aggiungiamo punti di rifinitura
@@ -217,37 +238,55 @@ def on_map_click(event):
 cid = fig.canvas.mpl_connect('button_press_event', on_map_click)
 
 # --- TASTI (MATPLOTLIB WIDGETS) ---
-ax_add = plt.axes([0.15, 0.05, 0.2, 0.075])
-ax_ref = plt.axes([0.40, 0.05, 0.2, 0.075])
-ax_del = plt.axes([0.65, 0.05, 0.2, 0.075])
+# Riorganizziamo lo spazio per 4 tasti
+ax_add = plt.axes([0.05, 0.05, 0.18, 0.075])
+ax_ref = plt.axes([0.28, 0.05, 0.18, 0.075])
+ax_del = plt.axes([0.51, 0.05, 0.18, 0.075])
+ax_sav = plt.axes([0.74, 0.05, 0.18, 0.075])
 
 b_add = Button(ax_add, 'Aggiungi')
 b_ref = Button(ax_ref, 'Migliora')
 b_del = Button(ax_del, 'Elimina')
+b_sav = Button(ax_sav, 'Salva Mask')
 
 def set_mode_add(event):
     stato_interfaccia['modalita'] = "AGGIUNGI"
-    stato_interfaccia['id_selezionato'] = None # Deseleziona
-    ridisegna()
+    stato_interfaccia['id_selezionato'] = None 
+    print("Modalità AGGIUNGI attiva")
 
 def set_mode_refine(event):
     stato_interfaccia['modalita'] = "MIGLIORA"
-    stato_interfaccia['id_selezionato'] = None # Reset selezione
-    ridisegna()
+    stato_interfaccia['id_selezionato'] = None
+    print("Modalità MIGLIORA attiva")
 
-def delete_object(event):
-    idx = stato_interfaccia['id_selezionato']
-    if idx is not None:
-        print(f"Eliminazione oggetto indice {idx}")
-        oggetti_scena.pop(idx)
-        stato_interfaccia['id_selezionato'] = None
-        ridisegna()
-    else:
-        print("Seleziona un oggetto (in modalità Migliora) per eliminarlo.")
+def set_mode_delete(event):
+    stato_interfaccia['modalita'] = "ELIMINA"
+    stato_interfaccia['id_selezionato'] = None
+    print("Modalità ELIMINA attiva: clicca sugli oggetti per rimuoverli.")
+
+def save_masks(event):
+    print(f"Generazione export per {len(oggetti_scena)} oggetti...")
+    # Crea sfondo nero (H, W)
+    combined_mask = np.zeros((H, W), dtype=np.uint8)
+    
+    count_saved = 0
+    for obj in oggetti_scena:
+        if obj['mask'] is not None:
+            # Assicuriamoci che la maschera sia booleana per l'indicizzazione
+            m = obj['mask'].astype(bool)
+            # Imposta a BIANCO (255) i pixel della maschera
+            combined_mask[m] = 255
+            count_saved += 1
+            
+    # Salva come PNG
+    filename = "masks_export.png"
+    Image.fromarray(combined_mask).save(filename)
+    print(f"Salvato con successo: {filename} (Maschere unite: {count_saved}/{len(oggetti_scena)})")
 
 b_add.on_clicked(set_mode_add)
 b_ref.on_clicked(set_mode_refine)
-b_del.on_clicked(delete_object)
+b_del.on_clicked(set_mode_delete)
+b_sav.on_clicked(save_masks)
 
 ridisegna()
 plt.show()
