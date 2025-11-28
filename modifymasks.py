@@ -2,7 +2,7 @@ import torch
 import numpy as np
 import matplotlib.pyplot as plt
 from PIL import Image
-from transformers import Sam3TrackerProcessor, Sam3TrackerModel,Sam3Processor, Sam3Model
+from transformers import Sam3TrackerProcessor, Sam3TrackerModel
 
 # --- 1. SETUP ---
 device = "cuda" if torch.cuda.is_available() else "cpu"
@@ -10,9 +10,6 @@ print(f" using cuda? :{torch.cuda.is_available()}")
 processor = Sam3TrackerProcessor.from_pretrained("facebook/sam3")
 model = Sam3TrackerModel.from_pretrained("facebook/sam3").to(device)
 
-
-standard_processor = Sam3Processor.from_pretrained("facebook/sam3")
-standard_model = Sam3Model.from_pretrained("facebook/sam3").to(device)
 image_path = "img.jpg"
 image = Image.open(image_path).convert("RGB")
 
@@ -30,54 +27,30 @@ etichette_correnti = [1]
 nuovi_click_buffer = [] 
 
 # --- FUNZIONE HELPER: ESEGUE SAM ---
-def esegui_sam_standard():    
-    
-    inputs = standard_processor(
-    images=image,
-    text="climbing holds",
-    return_tensors="pt"
-    ).to(device)
-
-    with torch.no_grad():
-        outputs = model(**inputs)
-
-    # Post-processing
-    nuova_maschera_batch = standard_processor.post_process_instance_segmentation(
-        outputs.pred_masks.cpu(), 
-        inputs["original_sizes"], 
-        gino="tocrash",
-        mask_threshold=0.0,
-        binarize=True
-    )[0]
-    
-    # Restituisce la maschera migliore (indice 0 delle 3 proposte)
-    return nuova_maschera_batch[0]
-
 def esegui_sam(punti, etichette):
     print(f"--> Esecuzione SAM su {len(punti)} punti totali...")
-
-    inputs = standard_processor(
-    images=image,
     
-    return_tensors="pt"
+    
+    inputs = processor(
+        images=image,
+        input_points=[[ punti ]],    
+        input_labels=[[ etichette ]], 
+        return_tensors="pt"
     ).to(device)
 
     with torch.no_grad():
         outputs = model(**inputs)
 
     # Post-processing
-    nuova_maschera_batch = processor.p(
+    nuova_maschera_batch = processor.post_process_masks(
         outputs.pred_masks.cpu(), 
         inputs["original_sizes"], 
-        gino="tocrash",
         mask_threshold=0.0,
         binarize=True
     )[0]
     
     # Restituisce la maschera migliore (indice 0 delle 3 proposte)
     return nuova_maschera_batch[0]
-
-
 
 # --- FUNZIONI DI VISUALIZZAZIONE ---
 def show_mask(mask, ax):
@@ -96,7 +69,7 @@ def show_points(coords, labels, ax):
 
 # --- 2. GENERAZIONE INIZIALE ---
 print("Generazione maschera iniziale...")
-maschera_attuale = esegui_sam_standard()
+maschera_attuale = esegui_sam(punti_correnti, etichette_correnti)
 
 
 # --- 3. INTERFACCIA GRAFICA ---

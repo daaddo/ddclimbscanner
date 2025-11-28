@@ -32,7 +32,8 @@ text_prompt = "climbing holds"
 inputs = processor(
     images=image,
     text=text_prompt,
-    return_tensors="pt"
+    return_tensors="pt",
+    input_points= [[[1]]]
     ).to(device)
 
 with torch.no_grad():
