@@ -217,11 +217,13 @@ def on_map_click(event):
 cid = fig.canvas.mpl_connect('button_press_event', on_map_click)
 
 # --- TASTI (MATPLOTLIB WIDGETS) ---
-ax_add = plt.axes([0.3, 0.05, 0.2, 0.075])
-ax_ref = plt.axes([0.55, 0.05, 0.2, 0.075])
+ax_add = plt.axes([0.15, 0.05, 0.2, 0.075])
+ax_ref = plt.axes([0.40, 0.05, 0.2, 0.075])
+ax_del = plt.axes([0.65, 0.05, 0.2, 0.075])
 
 b_add = Button(ax_add, 'Aggiungi')
 b_ref = Button(ax_ref, 'Migliora')
+b_del = Button(ax_del, 'Elimina')
 
 def set_mode_add(event):
     stato_interfaccia['modalita'] = "AGGIUNGI"
@@ -233,8 +235,19 @@ def set_mode_refine(event):
     stato_interfaccia['id_selezionato'] = None # Reset selezione
     ridisegna()
 
+def delete_object(event):
+    idx = stato_interfaccia['id_selezionato']
+    if idx is not None:
+        print(f"Eliminazione oggetto indice {idx}")
+        oggetti_scena.pop(idx)
+        stato_interfaccia['id_selezionato'] = None
+        ridisegna()
+    else:
+        print("Seleziona un oggetto (in modalità Migliora) per eliminarlo.")
+
 b_add.on_clicked(set_mode_add)
 b_ref.on_clicked(set_mode_refine)
+b_del.on_clicked(delete_object)
 
 ridisegna()
 plt.show()
