@@ -151,3 +151,12 @@ Thumbs.db
 # BPE vocabulary files
 *.bpe
 *.vocab
+
+
+.ubuntu/
+.venv/
+
+.ubuntu
+.venv
+
+other/

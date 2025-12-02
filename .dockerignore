@@ -1,0 +1,12 @@
+.venv/
+.ubuntu/
+checkpoints/
+__pycache__/
+*.jpg
+*.png
+.git
+.vscode
+masks_export.png
+examples/
+gemini.py
+other/

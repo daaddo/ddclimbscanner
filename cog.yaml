@@ -1,0 +1,24 @@
+# Configurazione per Replicate
+build:
+  gpu: true
+  
+  # Specifichiamo esplicitamente CUDA per evitare errori di parsing
+  cuda: "12.1"
+  
+  python_version: "3.12"
+  
+  system_packages:
+    - "libgl1-mesa-glx"
+    - "libglib2.0-0"
+
+  # Usa requirements.txt invece della lista deprecata
+  python_packages:
+    - "pillow >=12.0.0"
+    - "torch==2.5.1"
+    - "numpy>=2.3.5"
+    - "cog"
+    - "torchvision"
+    - "transformers @ git+https://github.com/huggingface/transformers.git"
+
+
+predict: "predict.py:Predictor"
