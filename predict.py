@@ -29,13 +29,12 @@ class Predictor(BasePredictor):
         self.device = "cuda" if torch.cuda.is_available() else "cpu"
         log(f"Using device: {self.device}")
         
-        model_id = "./config_checkpoints"
 
         # 1. Carica Processor e Config (leggeri)
         log(f"Caricamento configurazione da {model_id}...")
-        self.processor = Sam3Processor.from_pretrained("./config_checkpoint")
+        self.processor = Sam3Processor.from_pretrained("Davidinos/sam3data")
         log("processor caricato, caricamento modello")
-        self.model_text =Sam3Model.from_pretrained("./config_checkpoint").to(self.device)
+        self.model_text =Sam3Model.from_pretrained("Davidinos/sam3data").to(self.device)
         
         log("Model loaded successfully.")
 
