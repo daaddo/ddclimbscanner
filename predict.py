@@ -96,7 +96,7 @@ class Predictor(BasePredictor):
                 
                 # Salviamo il file singolo
                 print(f"img = {output_dir / f"mask_{i:03d}.png"}")
-                file_path = output_dir + f"mask_{i:03d}.png"
+                file_path = output_dir / f"mask_{i:03d}.png"
                 mask_pil.save(file_path)
                 output_paths.append(file_path)
 
