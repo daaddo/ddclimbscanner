@@ -31,7 +31,7 @@ class Predictor(BasePredictor):
         
 
         # 1. Carica Processor e Config (leggeri)
-        log(f"Caricamento configurazione da {model_id}...")
+        log(f"Caricamento configurazione da Davidinos/sam3data...")
         self.processor = Sam3Processor.from_pretrained("Davidinos/sam3data")
         log("processor caricato, caricamento modello")
         self.model_text =Sam3Model.from_pretrained("Davidinos/sam3data").to(self.device)
