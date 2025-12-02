@@ -53,5 +53,5 @@ jobs:
           if [ -n "${{ inputs.model_name }}" ]; then
             cog push r8.im/${{ inputs.model_name }}
           else
-            cog push
+            cog push r8.im/daaddo/sam3detection
           fi
