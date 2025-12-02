@@ -7,10 +7,10 @@ on:
     inputs:
       model_name:
         description: "meta/sam3"
-  # # Uncomment these lines to trigger the workflow on every push to the main branch
-  # push:
-  #   branches:
-  #     - main
+  #  Uncomment these lines to trigger the workflow on every push to the main branch
+  push:
+    branches:
+      - main
 
 jobs:
   push_to_replicate:
