@@ -102,6 +102,3 @@ class Predictor(BasePredictor):
 
         log(f"Completato. Restituisco {len(output_paths)} maschere.")
         return output_paths
-
-print(torch.__version__)
-print(torch.version.cuda)
